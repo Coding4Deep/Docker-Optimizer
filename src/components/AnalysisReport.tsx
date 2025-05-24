@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -120,6 +121,117 @@ const AnalysisReport = ({ report }: AnalysisReportProps) => {
     }
   };
 
+  // Create specific optimization steps based on actual issues found
+  const generateSpecificOptimizationSteps = () => {
+    if (report.issues.length === 0) {
+      return (
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-green-400" />
+              No Optimization Needed
+            </CardTitle>
+            <CardDescription className="text-slate-400">
+              Your Dockerfile follows best practices and no issues were found.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2 text-green-400">
+              <CheckCircle className="w-5 h-5" />
+              <span>Your Dockerfile is well-optimized and ready for production use.</span>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card className="bg-slate-800 border-slate-700">
+        <CardHeader>
+          <CardTitle className="text-white">Optimization Steps Based on Your Dockerfile</CardTitle>
+          <CardDescription className="text-slate-400">
+            These steps are specifically tailored to the issues found in your Dockerfile
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {report.issues.map((issue, index) => (
+            <div key={index} className="border-l-4 border-blue-500 pl-4">
+              <h4 className="font-semibold text-white mb-2">{index + 1}. Fix: {issue.type}</h4>
+              <p className="text-slate-300 mb-2">{issue.description}</p>
+              <div className="bg-slate-900 p-3 rounded text-sm">
+                <p className="text-green-400"># Recommended fix:</p>
+                <p className="text-slate-300">{issue.suggestion}</p>
+              </div>
+              <p className="text-slate-400 text-sm mt-2">Expected impact: {issue.impact}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const generateDockerfileComparison = () => {
+    const hasIssues = report.issues.length > 0;
+    
+    if (!hasIssues) {
+      return (
+        <div className="text-center py-8">
+          <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-white mb-2">Your Dockerfile is Optimized</h3>
+          <p className="text-slate-400">No improvements needed at this time.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
+              Issues Found in Your Dockerfile
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {report.issues.map((issue, index) => (
+              <div key={index} className="flex items-start space-x-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-sm text-red-400 font-medium">{issue.type}</span>
+                  {issue.lineNumber && (
+                    <span className="text-xs text-slate-500 ml-2">Line {issue.lineNumber}</span>
+                  )}
+                  <p className="text-sm text-slate-300">{issue.description}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-slate-800 border-slate-700 border-green-600/50">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2 text-green-400" />
+              Recommended Improvements
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {report.issues.map((issue, index) => (
+              <div key={index} className="flex items-start space-x-2">
+                <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <span className="text-sm text-green-400 font-medium">Fix {issue.type}</span>
+                  <p className="text-sm text-slate-300">{issue.suggestion}</p>
+                  <p className="text-xs text-slate-400">Impact: {issue.impact}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Report Header */}
@@ -222,287 +334,70 @@ const AnalysisReport = ({ report }: AnalysisReportProps) => {
           </TabsTrigger>
           <TabsTrigger value="dockerfile-alternatives" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Code className="w-4 h-4 mr-2" />
-            Dockerfile Alternatives
-          </TabsTrigger>
-          <TabsTrigger value="before-after" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             Before vs After
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="optimization-steps" className="space-y-4">
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Step-by-Step Size Reduction Guide</CardTitle>
-              <CardDescription className="text-slate-400">
-                Follow these steps to optimize your Docker image and reduce size
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">1. Use Smaller Base Images</h4>
-                  <p className="text-slate-300 mb-2">Replace heavy base images with minimal alternatives:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm text-green-400">
-                    <p># Instead of: FROM ubuntu:20.04</p>
-                    <p>FROM alpine:3.18</p>
-                    <p># Or: FROM node:18-alpine</p>
-                    <p># Or: FROM python:3.9-slim</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Potential savings: 200-500MB</p>
-                </div>
-
-                <div className="border-l-4 border-green-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">2. Combine RUN Commands</h4>
-                  <p className="text-slate-300 mb-2">Merge multiple RUN statements to reduce layers:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm">
-                    <p className="text-red-400"># Bad - Multiple layers:</p>
-                    <p className="text-red-400">RUN apt-get update</p>
-                    <p className="text-red-400">RUN apt-get install -y curl</p>
-                    <p className="text-red-400">RUN apt-get clean</p>
-                    <br />
-                    <p className="text-green-400"># Good - Single layer:</p>
-                    <p className="text-green-400">RUN apt-get update && \</p>
-                    <p className="text-green-400">    apt-get install -y curl && \</p>
-                    <p className="text-green-400">    apt-get clean && \</p>
-                    <p className="text-green-400">    rm -rf /var/lib/apt/lists/*</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Potential savings: 50-200MB</p>
-                </div>
-
-                <div className="border-l-4 border-yellow-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">3. Remove Package Managers & Cache</h4>
-                  <p className="text-slate-300 mb-2">Clean up after package installation:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm text-green-400">
-                    <p>RUN apt-get update && \</p>
-                    <p>    apt-get install -y --no-install-recommends curl && \</p>
-                    <p>    apt-get purge -y --auto-remove && \</p>
-                    <p>    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Potential savings: 100-300MB</p>
-                </div>
-
-                <div className="border-l-4 border-purple-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">4. Use Multi-Stage Builds</h4>
-                  <p className="text-slate-300 mb-2">Separate build and runtime environments:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm text-green-400">
-                    <p># Build stage</p>
-                    <p>FROM node:18-alpine AS builder</p>
-                    <p>WORKDIR /app</p>
-                    <p>COPY package*.json ./</p>
-                    <p>RUN npm ci --only=production</p>
-                    <br />
-                    <p># Runtime stage</p>
-                    <p>FROM node:18-alpine</p>
-                    <p>WORKDIR /app</p>
-                    <p>COPY --from=builder /app/node_modules ./node_modules</p>
-                    <p>COPY . .</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Potential savings: 300-800MB</p>
-                </div>
-
-                <div className="border-l-4 border-cyan-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">5. Optimize COPY Commands</h4>
-                  <p className="text-slate-300 mb-2">Copy only necessary files and use .dockerignore:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm">
-                    <p className="text-red-400"># Bad:</p>
-                    <p className="text-red-400">COPY . .</p>
-                    <br />
-                    <p className="text-green-400"># Good:</p>
-                    <p className="text-green-400">COPY package*.json ./</p>
-                    <p className="text-green-400">RUN npm install</p>
-                    <p className="text-green-400">COPY src/ ./src/</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Create .dockerignore with node_modules, .git, tests, docs</p>
-                </div>
-
-                <div className="border-l-4 border-red-500 pl-4">
-                  <h4 className="font-semibold text-white mb-2">6. Use Distroless Images</h4>
-                  <p className="text-slate-300 mb-2">For production, use Google's distroless images:</p>
-                  <div className="bg-slate-900 p-3 rounded text-sm text-green-400">
-                    <p>FROM gcr.io/distroless/nodejs18-debian11</p>
-                    <p>COPY --from=builder /app .</p>
-                    <p>EXPOSE 3000</p>
-                    <p>CMD ["server.js"]</p>
-                  </div>
-                  <p className="text-slate-400 text-sm mt-2">Potential savings: 100-400MB + improved security</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="dockerfile-alternatives" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <AlertTriangle className="w-5 h-5 mr-2 text-red-400" />
-                  Current Dockerfile Issues
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="bg-slate-900 p-4 rounded text-sm">
-                  <p className="text-red-400"># Problematic Dockerfile</p>
-                  <p className="text-slate-300">FROM ubuntu:20.04</p>
-                  <p className="text-slate-300">RUN apt-get update</p>
-                  <p className="text-slate-300">RUN apt-get install -y nodejs npm</p>
-                  <p className="text-slate-300">RUN apt-get install -y python3 pip</p>
-                  <p className="text-slate-300">COPY . .</p>
-                  <p className="text-slate-300">RUN npm install</p>
-                  <p className="text-slate-300">CMD ["npm", "start"]</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center text-red-400">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Heavy base image (Ubuntu)</span>
-                  </div>
-                  <div className="flex items-center text-red-400">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Multiple RUN layers</span>
-                  </div>
-                  <div className="flex items-center text-red-400">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">No cleanup commands</span>
-                  </div>
-                  <div className="flex items-center text-red-400">
-                    <AlertTriangle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Copies unnecessary files</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700 border-green-600/50">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <CheckCircle className="w-5 h-5 mr-2 text-green-400" />
-                  Optimized Dockerfile
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="bg-slate-900 p-4 rounded text-sm">
-                  <p className="text-green-400"># Optimized Multi-stage Dockerfile</p>
-                  <p className="text-slate-300">FROM node:18-alpine AS builder</p>
-                  <p className="text-slate-300">WORKDIR /app</p>
-                  <p className="text-slate-300">COPY package*.json ./</p>
-                  <p className="text-slate-300">RUN npm ci --only=production && \</p>
-                  <p className="text-slate-300">    npm cache clean --force</p>
-                  <br />
-                  <p className="text-slate-300">FROM node:18-alpine</p>
-                  <p className="text-slate-300">WORKDIR /app</p>
-                  <p className="text-slate-300">COPY --from=builder /app/node_modules ./node_modules</p>
-                  <p className="text-slate-300">COPY src/ ./src/</p>
-                  <p className="text-slate-300">USER node</p>
-                  <p className="text-slate-300">CMD ["node", "src/server.js"]</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center text-green-400">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Alpine base (minimal)</span>
-                  </div>
-                  <div className="flex items-center text-green-400">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Multi-stage build</span>
-                  </div>
-                  <div className="flex items-center text-green-400">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Cache cleanup</span>
-                  </div>
-                  <div className="flex items-center text-green-400">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Selective file copying</span>
-                  </div>
-                  <div className="flex items-center text-green-400">
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    <span className="text-sm">Non-root user</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {generateSpecificOptimizationSteps()}
         </TabsContent>
 
         <TabsContent value="issues" className="space-y-4">
-          {report.issues.map((issue, index) => (
-            <Card key={index} className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {getSeverityIcon(issue.severity)}
-                    <CardTitle className="text-lg text-white">{issue.type}</CardTitle>
-                    <Badge className={getSeverityColor(issue.severity)}>
-                      {issue.severity}
-                    </Badge>
-                  </div>
-                  <span className="text-sm text-green-400">{issue.impact}</span>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <h4 className="text-sm font-medium text-slate-300 mb-1">Issue</h4>
-                  <p className="text-slate-400">{issue.description}</p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium text-slate-300 mb-1">Recommendation</h4>
-                  <p className="text-white">{issue.suggestion}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="before-after" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {report.issues.length === 0 ? (
             <Card className="bg-slate-800 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Before Optimization</CardTitle>
+                <CardTitle className="text-white flex items-center">
+                  <CheckCircle className="w-5 h-5 mr-2 text-green-400" />
+                  No Issues Found
+                </CardTitle>
+                <CardDescription className="text-slate-400">
+                  Your Dockerfile follows best practices.
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Image Size</span>
-                    <span className="text-white">{report.originalSize}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Layers</span>
-                    <span className="text-white">{report.layers}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Security Score</span>
-                    <span className="text-white">{(report.securityScore - 1.2).toFixed(1)}/10</span>
-                  </div>
-                </div>
+              <CardContent>
+                <p className="text-slate-300">
+                  Great job! Your Dockerfile is well-structured and follows Docker best practices. 
+                  No optimization issues were detected.
+                </p>
               </CardContent>
             </Card>
+          ) : (
+            report.issues.map((issue, index) => (
+              <Card key={index} className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      {getSeverityIcon(issue.severity)}
+                      <CardTitle className="text-lg text-white">{issue.type}</CardTitle>
+                      <Badge className={getSeverityColor(issue.severity)}>
+                        {issue.severity}
+                      </Badge>
+                    </div>
+                    <span className="text-sm text-green-400">{issue.impact}</span>
+                  </div>
+                  {issue.lineNumber && (
+                    <CardDescription className="text-slate-400">
+                      Line {issue.lineNumber}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-1">Issue</h4>
+                    <p className="text-slate-400">{issue.description}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-slate-300 mb-1">Recommendation</h4>
+                    <p className="text-white">{issue.suggestion}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
 
-            <Card className="bg-slate-800 border-slate-700 border-green-600/50">
-              <CardHeader>
-                <CardTitle className="text-white">After Optimization</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Image Size</span>
-                    <span className="text-green-400">{report.optimizedSize}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Layers</span>
-                    <span className="text-green-400">{report.optimizedLayers}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Security Score</span>
-                    <span className="text-green-400">{report.securityScore}/10</span>
-                  </div>
-                </div>
-                <div className="pt-4 border-t border-slate-700">
-                  <div className="text-center">
-                    <span className="text-2xl font-bold text-green-400">{report.sizeReduction}</span>
-                    <p className="text-sm text-slate-400">Size Reduction</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <TabsContent value="dockerfile-alternatives" className="space-y-4">
+          {generateDockerfileComparison()}
         </TabsContent>
       </Tabs>
     </div>
