@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { analyzeDockerfile } from "@/utils/dockerAnalyzer";
 
 interface DockerFileUploadProps {
   onAnalysisComplete: (report: any) => void;
@@ -58,20 +59,21 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
     }
   };
 
-  const simulateAnalysis = async () => {
+  const performAnalysis = async () => {
     setAnalyzing(true);
     setProgress(0);
 
+    // Simulate progress steps
     const steps = [
-      { step: "Parsing Dockerfile...", progress: 20 },
-      { step: "Analyzing layers...", progress: 40 },
-      { step: "Checking base image...", progress: 60 },
+      { step: "Reading Dockerfile content...", progress: 20 },
+      { step: "Parsing instructions...", progress: 40 },
+      { step: "Analyzing best practices...", progress: 60 },
       { step: "Identifying optimizations...", progress: 80 },
       { step: "Generating report...", progress: 100 },
     ];
 
     for (const { step, progress } of steps) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 800));
       setProgress(progress);
       
       toast({
@@ -80,46 +82,36 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
       });
     }
 
-    const mockReport = {
-      fileName: activeMethod === "upload" ? file?.name : "Pasted Dockerfile",
-      analysisDate: new Date().toISOString(),
-      originalSize: "1.2 GB",
-      optimizedSize: "456 MB",
-      sizeReduction: "62%",
-      securityScore: 8.2,
-      layers: 12,
-      optimizedLayers: 8,
-      issues: [
-        {
-          severity: "high",
-          type: "Base Image",
-          description: "Using ubuntu:latest instead of ubuntu:20.04-slim",
-          suggestion: "Use a specific, smaller base image",
-          impact: "~300MB reduction"
-        },
-        {
-          severity: "medium",
-          type: "Layer Optimization", 
-          description: "Multiple RUN commands can be combined",
-          suggestion: "Combine RUN apt-get update && apt-get install",
-          impact: "~2 layers reduction"
-        }
-      ],
-      optimizations: [
-        "Use multi-stage builds",
-        "Minimize layers by combining commands",
-        "Use .dockerignore file",
-        "Remove package caches"
-      ]
-    };
+    // Get content based on active method
+    let content = "";
+    let fileName = "";
+
+    if (activeMethod === "upload" && file) {
+      content = await file.text();
+      fileName = file.name;
+    } else if (activeMethod === "paste") {
+      content = dockerfileContent;
+      fileName = "Pasted Dockerfile";
+    }
+
+    // Perform real analysis
+    const analysisResult = analyzeDockerfile(content, fileName);
 
     setAnalyzing(false);
-    onAnalysisComplete(mockReport);
+    onAnalysisComplete(analysisResult);
     
-    toast({
-      title: "Analysis Complete!",
-      description: "Docker optimization report generated successfully.",
-    });
+    if (analysisResult.hasIssues) {
+      toast({
+        title: "Analysis Complete!",
+        description: `Found ${analysisResult.issues.length} optimization opportunities.`,
+      });
+    } else {
+      toast({
+        title: "Analysis Complete!",
+        description: "Your Dockerfile looks good! No major issues found.",
+        variant: "default",
+      });
+    }
   };
 
   const canAnalyze = (activeMethod === "upload" && file) || (activeMethod === "paste" && dockerfileContent.trim());
@@ -234,7 +226,7 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Docker Analysis</h3>
                 <Button
-                  onClick={simulateAnalysis}
+                  onClick={performAnalysis}
                   disabled={analyzing}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >

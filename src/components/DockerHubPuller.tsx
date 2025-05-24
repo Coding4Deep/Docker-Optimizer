@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Search, Download, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { analyzeDockerImage } from "@/utils/dockerAnalyzer";
 
 interface DockerHubPullerProps {
   onAnalysisComplete: (report: any) => void;
@@ -72,45 +72,18 @@ const DockerHubPuller = ({ onAnalysisComplete }: DockerHubPullerProps) => {
   const analyzeImage = async () => {
     if (!pulledImage) return;
 
-    // Generate mock analysis report for pulled image
-    const mockReport = {
-      imageName: pulledImage.name,
-      analysisDate: new Date().toISOString(),
-      originalSize: pulledImage.size,
-      optimizedSize: Math.floor(parseInt(pulledImage.size) * 0.4) + "MB",
-      sizeReduction: "60%",
-      securityScore: 7.8,
-      layers: pulledImage.layers,
-      optimizedLayers: Math.max(pulledImage.layers - 3, 2),
-      issues: [
-        {
-          severity: "medium",
-          type: "Security",
-          description: "Image contains packages with known vulnerabilities",
-          suggestion: "Update to latest security patches",
-          impact: "Improved security score"
-        },
-        {
-          severity: "low",
-          type: "Size Optimization",
-          description: "Unused packages detected",
-          suggestion: "Remove unnecessary packages",
-          impact: "~80MB reduction"
-        }
-      ],
-      optimizations: [
-        "Use distroless base images",
-        "Remove package managers",
-        "Minimize attack surface",
-        "Update base image regularly"
-      ]
-    };
+    // Use real analysis for Docker images
+    const analysisResult = analyzeDockerImage(pulledImage.name);
+    
+    // Update with actual pulled image data
+    analysisResult.originalSize = pulledImage.size;
+    analysisResult.layers = pulledImage.layers;
 
-    onAnalysisComplete(mockReport);
+    onAnalysisComplete(analysisResult);
     
     toast({
       title: "Analysis Complete!",
-      description: "Docker image optimization report generated.",
+      description: "Docker image analysis completed. Note: Limited analysis without Dockerfile.",
     });
   };
 
