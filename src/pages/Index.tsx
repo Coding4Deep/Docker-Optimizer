@@ -5,6 +5,7 @@ import DockerFileUpload from "@/components/DockerFileUpload";
 import AnalysisReport from "@/components/AnalysisReport";
 import DockerHubPuller from "@/components/DockerHubPuller";
 import SettingsDialog from "@/components/SettingsDialog";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,7 +15,7 @@ const Index = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900">
       {/* Header */}
       <div className="border-b border-slate-700 bg-slate-800/80 backdrop-blur-sm">
         <div className="container mx-auto px-6 py-4">
@@ -29,6 +30,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
+              <ThemeToggle />
               <Button 
                 variant="outline" 
                 size="sm" 

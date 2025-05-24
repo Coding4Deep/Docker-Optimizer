@@ -1,10 +1,11 @@
-
 import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface DockerFileUploadProps {
   onAnalysisComplete: (report: any) => void;
@@ -13,8 +14,10 @@ interface DockerFileUploadProps {
 const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [dockerfileContent, setDockerfileContent] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [activeMethod, setActiveMethod] = useState<"upload" | "paste">("upload");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -37,6 +40,7 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.name === "Dockerfile" || droppedFile.name.includes("Dockerfile")) {
         setFile(droppedFile);
+        setActiveMethod("upload");
       } else {
         toast({
           title: "Invalid file",
@@ -50,6 +54,7 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+      setActiveMethod("upload");
     }
   };
 
@@ -57,7 +62,6 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
     setAnalyzing(true);
     setProgress(0);
 
-    // Simulate analysis progress
     const steps = [
       { step: "Parsing Dockerfile...", progress: 20 },
       { step: "Analyzing layers...", progress: 40 },
@@ -76,9 +80,8 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
       });
     }
 
-    // Generate mock analysis report
     const mockReport = {
-      fileName: file?.name,
+      fileName: activeMethod === "upload" ? file?.name : "Pasted Dockerfile",
       analysisDate: new Date().toISOString(),
       originalSize: "1.2 GB",
       optimizedSize: "456 MB",
@@ -96,25 +99,17 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
         },
         {
           severity: "medium",
-          type: "Layer Optimization",
+          type: "Layer Optimization", 
           description: "Multiple RUN commands can be combined",
           suggestion: "Combine RUN apt-get update && apt-get install",
           impact: "~2 layers reduction"
-        },
-        {
-          severity: "low",
-          type: "Cache Efficiency",
-          description: "Package cache not cleaned",
-          suggestion: "Add apt-get clean && rm -rf /var/lib/apt/lists/*",
-          impact: "~50MB reduction"
         }
       ],
       optimizations: [
         "Use multi-stage builds",
         "Minimize layers by combining commands",
         "Use .dockerignore file",
-        "Remove package caches",
-        "Use specific base image versions"
+        "Remove package caches"
       ]
     };
 
@@ -127,6 +122,8 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
     });
   };
 
+  const canAnalyze = (activeMethod === "upload" && file) || (activeMethod === "paste" && dockerfileContent.trim());
+
   return (
     <div className="space-y-6">
       <Card className="bg-slate-800 border-slate-700">
@@ -136,68 +133,103 @@ const DockerFileUpload = ({ onAnalysisComplete }: DockerFileUploadProps) => {
             Dockerfile Upload & Analysis
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Upload your Dockerfile for comprehensive optimization analysis
+            Upload your Dockerfile or paste content directly for comprehensive optimization analysis
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* File Upload Area */}
-          <div
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragActive
-                ? "border-blue-500 bg-blue-500/10"
-                : "border-slate-600 hover:border-slate-500"
-            }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              onChange={handleFileSelect}
-              className="hidden"
-              accept=".dockerfile,Dockerfile"
-            />
-            
-            {file ? (
-              <div className="space-y-4">
-                <CheckCircle className="w-12 h-12 text-green-400 mx-auto" />
-                <div>
-                  <p className="text-lg font-medium text-white">{file.name}</p>
-                  <p className="text-sm text-slate-400">
-                    {(file.size / 1024).toFixed(1)} KB • Ready for analysis
-                  </p>
-                </div>
-                <Button
-                  onClick={() => setFile(null)}
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
-                >
-                  Remove File
-                </Button>
+          <Tabs value={activeMethod} onValueChange={(value) => setActiveMethod(value as "upload" | "paste")}>
+            <TabsList className="bg-slate-700 border-slate-600">
+              <TabsTrigger value="upload" className="data-[state=active]:bg-blue-600">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload File
+              </TabsTrigger>
+              <TabsTrigger value="paste" className="data-[state=active]:bg-blue-600">
+                <Copy className="w-4 h-4 mr-2" />
+                Paste Content
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="upload" className="space-y-4">
+              <div
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  dragActive
+                    ? "border-blue-500 bg-blue-500/10"
+                    : "border-slate-600 hover:border-slate-500"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".dockerfile,Dockerfile"
+                />
+                
+                {file ? (
+                  <div className="space-y-4">
+                    <CheckCircle className="w-12 h-12 text-green-400 mx-auto" />
+                    <div>
+                      <p className="text-lg font-medium text-white">{file.name}</p>
+                      <p className="text-sm text-slate-400">
+                        {(file.size / 1024).toFixed(1)} KB • Ready for analysis
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setFile(null)}
+                      variant="outline"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      Remove File
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <FileText className="w-12 h-12 text-slate-400 mx-auto" />
+                    <div>
+                      <p className="text-lg font-medium text-white">Drop your Dockerfile here</p>
+                      <p className="text-sm text-slate-400">
+                        or click to browse files
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Select Dockerfile
+                    </Button>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-4">
-                <FileText className="w-12 h-12 text-slate-400 mx-auto" />
-                <div>
-                  <p className="text-lg font-medium text-white">Drop your Dockerfile here</p>
-                  <p className="text-sm text-slate-400">
-                    or click to browse files
-                  </p>
-                </div>
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Select Dockerfile
-                </Button>
+            </TabsContent>
+
+            <TabsContent value="paste" className="space-y-4">
+              <div className="space-y-2">
+                <label htmlFor="dockerfile-content" className="text-sm font-medium text-slate-300">
+                  Dockerfile Content
+                </label>
+                <Textarea
+                  id="dockerfile-content"
+                  placeholder="FROM node:18-alpine&#10;WORKDIR /app&#10;COPY package*.json ./&#10;RUN npm install&#10;COPY . .&#10;EXPOSE 3000&#10;CMD [&quot;npm&quot;, &quot;start&quot;]"
+                  value={dockerfileContent}
+                  onChange={(e) => setDockerfileContent(e.target.value)}
+                  className="min-h-[200px] bg-slate-700 border-slate-600 text-white font-mono text-sm"
+                />
               </div>
-            )}
-          </div>
+              {dockerfileContent.trim() && (
+                <div className="flex items-center space-x-2 text-sm text-green-400">
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Dockerfile content ready for analysis</span>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
           {/* Analysis Section */}
-          {file && (
+          {canAnalyze && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Docker Analysis</h3>

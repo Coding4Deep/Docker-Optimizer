@@ -5,8 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Settings, Database, Bell, Shield, Download } from "lucide-react";
+import { Settings, Bell, Shield, Download } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,10 +18,14 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const [autoAnalysis, setAutoAnalysis] = useState(true);
   const [notifications, setNotifications] = useState(true);
   const [maxFileSize, setMaxFileSize] = useState("100");
-  const [storageBackend, setStorageBackend] = useState("local");
   const { toast } = useToast();
 
   const handleSave = () => {
+    // Save settings to localStorage
+    localStorage.setItem('dockerAnalyzer_autoAnalysis', autoAnalysis.toString());
+    localStorage.setItem('dockerAnalyzer_notifications', notifications.toString());
+    localStorage.setItem('dockerAnalyzer_maxFileSize', maxFileSize);
+    
     toast({
       title: "Settings Saved",
       description: "Your preferences have been updated successfully.",
@@ -35,7 +38,6 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
       autoAnalysis,
       notifications,
       maxFileSize,
-      storageBackend,
       exportDate: new Date().toISOString()
     };
     
@@ -107,37 +109,6 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             </CardContent>
           </Card>
 
-          {/* Storage Settings */}
-          <Card className="bg-slate-700 border-slate-600">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center">
-                <Database className="w-4 h-4 mr-2 text-purple-400" />
-                Storage Settings
-              </CardTitle>
-              <CardDescription className="text-slate-400">
-                Configure where files and reports are stored
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="storage-backend" className="text-slate-300">
-                  Storage Backend
-                </Label>
-                <Select value={storageBackend} onValueChange={setStorageBackend}>
-                  <SelectTrigger className="bg-slate-600 border-slate-500 text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-700 border-slate-600">
-                    <SelectItem value="local">Local Storage</SelectItem>
-                    <SelectItem value="minio">MinIO (S3 Compatible)</SelectItem>
-                    <SelectItem value="aws-s3">AWS S3</SelectItem>
-                    <SelectItem value="azure-blob">Azure Blob Storage</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Notification Settings */}
           <Card className="bg-slate-700 border-slate-600">
             <CardHeader>
@@ -188,7 +159,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
             >
               Save Changes
             </Button>
-          </div>
+            </div>
         </div>
       </DialogContent>
     </Dialog>
