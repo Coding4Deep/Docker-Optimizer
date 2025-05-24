@@ -1,16 +1,17 @@
-
 import { useState } from "react";
 import { Upload, Search, FileText, Activity, Settings, BarChart3 } from "lucide-react";
 import DashboardOverview from "@/components/DashboardOverview";
 import DockerFileUpload from "@/components/DockerFileUpload";
 import AnalysisReport from "@/components/AnalysisReport";
 import DockerHubPuller from "@/components/DockerHubPuller";
+import SettingsDialog from "@/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [activeReport, setActiveReport] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -28,7 +29,12 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" className="border-slate-600 text-slate-300 hover:bg-slate-700">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                onClick={() => setSettingsOpen(true)}
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
@@ -86,6 +92,8 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 };
