@@ -26,7 +26,7 @@ const Index = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Docker Analyzer</h1>
-                <p className="text-sm text-slate-400">Microservices DevOps Platform</p>
+                <p className="text-sm text-slate-400">Microservices DevOps Platform - By Deepak Sagar</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
